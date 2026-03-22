@@ -201,7 +201,6 @@ def api_chat_send():
         print(f"Error: {e}")
         return jsonify({'error': str(e)}), 500
 
-from groq_handler import groq_handler
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

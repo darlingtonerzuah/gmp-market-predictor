@@ -123,6 +123,7 @@
         <div class="sidebar-header">
             <h1>📊 GMP</h1>
             <p>Ghana Market Pulse</p>
+              <button id="darkModeBtn" onclick="toggleDarkMode()" style="background: none; border: none; font-size: 1.5em; cursor: pointer; margin-top: 10px;">🌙</button>
         </div>
         
         <ul class="sidebar-menu">
@@ -140,5 +141,8 @@
             {% block content %}{% endblock %}
         </div>
     </div>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='darkmode.css') }}">
+    <script src="{{ url_for('static', filename='darkmode.js') }}"></script>
 </body>
 </html>

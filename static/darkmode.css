@@ -1,0 +1,61 @@
+body.dark-mode {
+    background: #0f1419;
+    color: #e0e0e0;
+}
+
+body.dark-mode .sidebar {
+    background: #1a1f2e;
+    border-right: 1px solid #333;
+}
+
+body.dark-mode .sidebar-menu a {
+    color: #e0e0e0;
+}
+
+body.dark-mode .sidebar-menu a:hover {
+    background: #2a3142;
+}
+
+body.dark-mode .content {
+    background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+}
+
+body.dark-mode .chat-section,
+body.dark-mode .chart-card,
+body.dark-mode .stat-card,
+body.dark-mode .table-wrapper {
+    background: #1e2330;
+    color: #e0e0e0;
+}
+
+body.dark-mode table thead {
+    background: #0f1419;
+}
+
+body.dark-mode table td {
+    border-bottom: 1px solid #333;
+}
+
+body.dark-mode tbody tr:hover {
+    background: #2a3142;
+}
+
+body.dark-mode input,
+body.dark-mode select {
+    background: #2a3142;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .header {
+    color: #e0e0e0;
+}
+
+body.dark-mode .messages {
+    background: #2a3142;
+}
+
+body.dark-mode .message.other {
+    background: #1a2332;
+    color: #e0e0e0;
+}
