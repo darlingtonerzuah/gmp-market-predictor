@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% if request.endpoint != 'chat' %}
+    <meta http-equiv="refresh" content="15">
+    {% endif %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ghana Market Pulse{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 30px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 30px 20px;
+            border-bottom: 2px solid #34495e;
+            text-align: center;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding-top: 20px;
+        }
+        
+        .sidebar-menu li {
+            margin: 0;
+        }
+        
+        .sidebar-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar-menu a:hover {
+            background: #34495e;
+            border-left-color: #3498db;
+        }
+        
+        .sidebar-menu a.active {
+            background: #34495e;
+            border-left-color: #27ae60;
+        }
+        
+        .content {
+            margin-left: 250px;
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .content {
+                margin-left: 200px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>📊 GMP</h1>
+            <p>Ghana Market Pulse</p>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li><a href="/" class="{% if request.endpoint == 'index' %}active{% endif %}">📊 Dashboard</a></li>
+            <li><a href="/#predictions" class="{% if request.endpoint == 'index' %}active{% endif %}">🔮 Predictions</a></li>
+            <li><a href="/#accuracy" class="{% if request.endpoint == 'index' %}active{% endif %}">📈 Model Accuracy</a></li>
+            <li><a href="/comparison" class="{% if request.endpoint == 'comparison' %}active{% endif %}">⚖️ Model Comparison</a></li>
+            <li><a href="/charts" class="{% if request.endpoint == 'charts' %}active{% endif %}">📉 Price Charts</a></li>
+            <li><a href="/chat" class="{% if request.endpoint == 'chat' %}active{% endif %}">💬 Community Chat</a></li>
+        </ul>
+    </div>
+    
+    <div class="content">
+        <div class="main-container">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

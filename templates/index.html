@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Ghana Market Pulse{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 Ghana Market Pulse(GMP)</h1>
+    <p>Ghana Stock Exchange Live Data</p>
+</div>
+
+<div class="controls">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search by stock symbol...">
+    </div>
+</div>
+
+<div class="export-buttons">
+    <button id="exportStocks" class="export-btn">📥 Export Stocks</button>
+    <button id="exportPredictions" class="export-btn">📥 Export Predictions</button>
+</div>
+
+<div class="stats">
+    <div class="stat-card">
+        <h3>Total Stocks</h3>
+        <div class="value" id="totalStocks">0</div>
+    </div>
+    <div class="stat-card">
+        <h3>Visible Stocks</h3>
+        <div class="value" id="visibleStocks">0</div>
+    </div>
+    <div class="stat-card">
+        <h3>Last Updated</h3>
+        <div class="value">
+            ⏱️ Refreshing in <span id="countdown">15</span>s
+        </div>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table id="stockTable">
+        <thead>
+            <tr>
+                <th class="sortable" data-sort="symbol">Symbol</th>
+                <th class="sortable" data-sort="bid_price">Bid Price</th>
+                <th class="sortable" data-sort="ask_price">Ask Price</th>
+                <th class="sortable" data-sort="last_trade_price">Last Trade</th>
+                <th class="sortable" data-sort="open_price">Open</th>
+                <th class="sortable" data-sort="high_price">High</th>
+                <th class="sortable" data-sort="low_price">Low</th>
+                <th class="sortable" data-sort="close_price">Close</th>
+                <th class="sortable" data-sort="change">Change</th>
+                <th class="sortable" data-sort="percent_change">% Change</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+    <div id="noResults" class="no-results hidden">No stocks found</div>
+</div>
+
+<!-- Predictions Section -->
+<div style="margin-top: 40px;" id="predictions">
+    <div class="header" style="margin-bottom: 30px;">
+        <h2 style="font-size: 2em;">🔮 Price Predictions</h2>
+        <p>ML-based next-day price forecasts</p>
+    </div>
+    
+    <div class="table-wrapper">
+        <table id="predictionsTable">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Current Price</th>
+                    <th>Predicted Price</th>
+                    <th>Change</th>
+                    <th>% Change</th>
+                    <th>Data Points</th>
+                </tr>
+            </thead>
+            <tbody id="predictionsBody">
+            </tbody>
+        </table>
+        <div id="noPredictions" class="no-results hidden">No predictions available yet</div>
+    </div>
+</div>
+
+<!-- Model Accuracy Section -->
+<div style="margin-top: 40px;" id="accuracy">
+    <div class="header" style="margin-bottom: 30px;">
+        <h2 style="font-size: 2em;">📈 Model Accuracy</h2>
+        <p>Backtesting results - How accurate are our predictions?</p>
+    </div>
+    
+    <div class="table-wrapper">
+        <table id="backtestTable">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Accuracy %</th>
+                    <th>Mean Error %</th>
+                    <th>Tests Run</th>
+                </tr>
+            </thead>
+            <tbody id="backtestBody">
+            </tbody>
+        </table>
+        <div id="noBacktest" class="no-results hidden">No backtest data yet</div>
+    </div>
+</div>
+
+<style>
+    .controls {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .search-box {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-card h3 {
+        color: #7f8c8d;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+    }
+    
+    .stat-card .value {
+        font-size: 2em;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .table-wrapper {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        overflow: hidden;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: #2c3e50;
+        color: white;
+    }
+    
+    th {
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9em;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    th.sortable::after {
+        content: ' ↕️';
+        font-size: 0.8em;
+    }
+    
+    th:hover {
+        background: #34495e;
+    }
+    
+    td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #ecf0f1;
+    }
+    
+    tbody tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .symbol {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .positive {
+        color: #27ae60;
+        font-weight: 600;
+    }
+    
+    .negative {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    
+    .neutral {
+        color: #95a5a6;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+        font-size: 1.2em;
+    }
+    
+    .header {
+        text-align: center;
+        color: white;
+    }
+    
+    .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+    }
+    
+    .header h2 {
+        color: white;
+    }
+    
+    .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+    }
+
+    .export-buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: 15px;
+}
+
+.export-btn {
+    background: #27ae60;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.export-btn:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+    let allStocks = [];
+    let sortColumn = 'symbol';
+    let sortDirection = 'asc';
+
+    async function loadStocks() {
+        try {
+            const response = await fetch('/api/stocks');
+            allStocks = await response.json();
+            displayStocks(allStocks);
+            updateStats();
+        } catch (error) {
+            console.error('Error loading stocks:', error);
+        }
+    }
+
+    function displayStocks(stocks) {
+        const tableBody = document.getElementById('tableBody');
+        const noResults = document.getElementById('noResults');
+        
+        if (stocks.length === 0) {
+            tableBody.innerHTML = '';
+            noResults.classList.remove('hidden');
+            document.getElementById('visibleStocks').textContent = 0;
+            return;
+        }
+        
+        noResults.classList.add('hidden');
+        tableBody.innerHTML = stocks.map(stock => `
+            <tr>
+                <td class="symbol">${stock.symbol}</td>
+                <td>${stock.bid_price.toFixed(2)}</td>
+                <td>${stock.ask_price.toFixed(2)}</td>
+                <td>${stock.last_trade_price.toFixed(2)}</td>
+                <td>${stock.open_price.toFixed(2)}</td>
+                <td>${stock.high_price.toFixed(2)}</td>
+                <td>${stock.low_price.toFixed(2)}</td>
+                <td>${stock.close_price.toFixed(2)}</td>
+                <td class="${stock.change > 0 ? 'positive' : stock.change < 0 ? 'negative' : 'neutral'}">
+                    ${stock.change.toFixed(2)}
+                </td>
+                <td class="${stock.percent_change > 0 ? 'positive' : stock.percent_change < 0 ? 'negative' : 'neutral'}">
+                    ${stock.percent_change.toFixed(2)}%
+                </td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('visibleStocks').textContent = stocks.length;
+    }
+
+    function updateStats() {
+        document.getElementById('totalStocks').textContent = allStocks.length;
+    }
+
+    function filterStocks() {
+        const searchTerm = document.getElementById('searchInput').value.toUpperCase();
+        const filtered = allStocks.filter(stock => 
+            stock.symbol.includes(searchTerm)
+        );
+        displayStocks(filtered);
+    }
+
+    function sortStocks(column) {
+        if (sortColumn === column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortColumn = column;
+            sortDirection = 'asc';
+        }
+        
+        const sorted = [...allStocks].sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+            
+            if (typeof valA === 'string') {
+                valA = valA.toUpperCase();
+                valB = valB.toUpperCase();
+            }
+            
+            if (sortDirection === 'asc') {
+                return valA > valB ? 1 : -1;
+            } else {
+                return valA < valB ? 1 : -1;
+            }
+        });
+        
+        displayStocks(sorted);
+    }
+
+    // Predictions
+    async function loadPredictions() {
+        try {
+            const response = await fetch('/api/predictions');
+            const predictions = await response.json();
+            displayPredictions(predictions);
+        } catch (error) {
+            console.error('Error loading predictions:', error);
+        }
+    }
+
+    function displayPredictions(predictions) {
+        const tableBody = document.getElementById('predictionsBody');
+        const noPred = document.getElementById('noPredictions');
+        
+        if (predictions.length === 0) {
+            tableBody.innerHTML = '';
+            noPred.classList.remove('hidden');
+            return;
+        }
+        
+        noPred.classList.add('hidden');
+        tableBody.innerHTML = predictions.map(pred => `
+            <tr>
+                <td class="symbol">${pred.symbol}</td>
+                <td>${pred.current_price.toFixed(2)}</td>
+                <td>${pred.predicted_price.toFixed(2)}</td>
+                <td class="${pred.change > 0 ? 'positive' : pred.change < 0 ? 'negative' : 'neutral'}">
+                    ${pred.change.toFixed(2)}
+                </td>
+                <td class="${pred.percent_change > 0 ? 'positive' : pred.percent_change < 0 ? 'negative' : 'neutral'}">
+                    ${pred.percent_change.toFixed(2)}%
+                </td>
+                <td>${pred.data_points}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Backtest
+    async function loadBacktest() {
+        try {
+            const response = await fetch('/api/backtest');
+            const results = await response.json();
+            displayBacktest(results);
+        } catch (error) {
+            console.error('Error loading backtest:', error);
+        }
+    }
+
+    function displayBacktest(results) {
+        const tableBody = document.getElementById('backtestBody');
+        const noBacktest = document.getElementById('noBacktest');
+        
+        if (results.length === 0) {
+            tableBody.innerHTML = '';
+            noBacktest.classList.remove('hidden');
+            return;
+        }
+        
+        noBacktest.classList.add('hidden');
+        tableBody.innerHTML = results.map(result => `
+            <tr>
+                <td class="symbol">${result.symbol}</td>
+                <td class="positive">${result.accuracy.toFixed(2)}%</td>
+                <td>${result.mean_error.toFixed(2)}%</td>
+                <td>${result.predictions_tested}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Timer
+    let countdown = 15;
+    setInterval(() => {
+        countdown--;
+        document.getElementById('countdown').textContent = countdown;
+        if (countdown <= 0) {
+            countdown = 15;
+        }
+    }, 1000);
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('keyup', filterStocks);
+    
+    document.querySelectorAll('th.sortable').forEach(header => {
+        header.addEventListener('click', () => {
+            sortStocks(header.dataset.sort);
+        });
+    });
+
+    // Load all data
+    loadStocks();
+    loadPredictions();
+    loadBacktest();
+
+    // Export functionality
+document.getElementById('exportStocks').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/api/export/stocks');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `stocks_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (error) {
+        alert('Error exporting stocks');
+    }
+});
+
+document.getElementById('exportPredictions').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/api/export/predictions');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `predictions_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    } catch (error) {
+        alert('Error exporting predictions');
+    }
+});
+</script>
+{% endblock %}

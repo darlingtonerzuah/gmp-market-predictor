@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Price Charts - Ghana Market Pulse{% endblock %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Charts - Ghana Market Pulse</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .nav {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .nav a {
+            display: inline-block;
+            background: white;
+            color: #2c3e50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        
+        .nav a:hover {
+            background: #ecf0f1;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .chart-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .stock-select {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stock-select label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .stock-select select {
+            padding: 10px 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            font-size: 1em;
+            min-width: 200px;
+            cursor: pointer;
+        }
+        
+        #chartContainer {
+            position: relative;
+            height: 450px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Price Charts</h1>
+            <p>Stock price trends over time</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/">📊 Dashboard</a>
+            <a href="/comparison">⚖️ Model Comparison</a>
+            <a href="/charts">📈 Price Charts</a>
+        </div>
+        
+        <div class="chart-card">
+            <h3>Stock Price Trend</h3>
+            <div class="stock-select">
+                <label for="stockSelect">Select Stock:</label>
+                <select id="stockSelect">
+                    <option value="">Loading stocks...</option>
+                </select>
+            </div>
+            <div id="chartContainer">
+                <div class="loading">Select a stock to view chart</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allStocks = [];
+        let chart = null;
+        
+        // Load available stocks
+        async function loadStocks() {
+            try {
+                const response = await fetch('/api/stocks');
+                allStocks = await response.json();
+                
+                const select = document.getElementById('stockSelect');
+                select.innerHTML = '<option value="">Select a stock...</option>';
+                
+                allStocks.forEach(stock => {
+                    const option = document.createElement('option');
+                    option.value = stock.symbol;
+                    option.text = stock.symbol;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading stocks:', error);
+            }
+        }
+        
+        // Load and display chart for selected stock
+        async function loadChart(symbol) {
+            if (!symbol) {
+                document.getElementById('chartContainer').innerHTML = '<div class="loading">Select a stock to view chart</div>';
+                return;
+            }
+            
+            document.getElementById('chartContainer').innerHTML = '<div class="loading">Loading chart...</div>';
+            
+            try {
+                const response = await fetch(`/api/stock-history/${symbol}`);
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    document.getElementById('chartContainer').innerHTML = '<div class="loading">No data available for this stock</div>';
+                    return;
+                }
+                
+                // Prepare data for chart
+                const labels = data.map(point => {
+                    const date = new Date(point.time);
+                    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                });
+                
+                const prices = data.map(point => point.price);
+                
+                // Create canvas
+                document.getElementById('chartContainer').innerHTML = '<canvas id="priceChart"></canvas>';
+                
+                // Destroy old chart if exists
+                if (chart) {
+                    chart.destroy();
+                }
+                
+                // Create new chart
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: `${symbol} Price`,
+                            data: prices,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#3498db',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    font: { size: 14 },
+                                    padding: 15
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Price'
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading chart:', error);
+                document.getElementById('chartContainer').innerHTML = '<div class="loading">Error loading chart data</div>';
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('stockSelect').addEventListener('change', (e) => {
+            loadChart(e.target.value);
+        });
+        
+        // Load stocks on page load
+        loadStocks();
+    </script>
+</body>
+</html>
+{% endblock %}

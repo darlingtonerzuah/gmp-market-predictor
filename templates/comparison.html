@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Model Comparison - Ghana Market Pulse{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="15">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Comparison - Ghana Market Pulse</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .nav a {
+            background: white;
+            color: #2c3e50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        
+        .nav a:hover {
+            background: #ecf0f1;
+        }
+        
+        .table-wrapper {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .symbol {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .positive {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .negative {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .neutral {
+            color: #95a5a6;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚖️ Model Comparison</h1>
+            <p>Linear Regression vs ARIMA</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/">📊 Dashboard</a>
+            <a href="/comparison">⚖️ Model Comparison</a>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="comparisonTable">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Current Price</th>
+                        <th>LR Prediction</th>
+                        <th>LR Change %</th>
+                        <th>ARIMA Prediction</th>
+                        <th>ARIMA Change %</th>
+                        <th>Data Points</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results">Collecting data... Check back soon</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadComparisons() {
+            try {
+                const response = await fetch('/api/model-comparison');
+                const comps = await response.json();
+                displayComparisons(comps);
+            } catch (error) {
+                console.error('Error loading comparisons:', error);
+            }
+        }
+
+        function displayComparisons(comps) {
+            const tableBody = document.getElementById('tableBody');
+            const noResults = document.getElementById('noResults');
+            
+            if (comps.length === 0) {
+                tableBody.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            noResults.classList.add('hidden');
+            tableBody.innerHTML = comps.map(comp => `
+                <tr>
+                    <td class="symbol">${comp.symbol}</td>
+                    <td>${comp.current_price.toFixed(2)}</td>
+                    <td>${comp.lr_predicted.toFixed(2)}</td>
+                    <td class="${comp.lr_change > 0 ? 'positive' : comp.lr_change < 0 ? 'negative' : 'neutral'}">
+                        ${comp.lr_change.toFixed(2)}%
+                    </td>
+                    <td>${comp.arima_predicted.toFixed(2)}</td>
+                    <td class="${comp.arima_change > 0 ? 'positive' : comp.arima_change < 0 ? 'negative' : 'neutral'}">
+                        ${comp.arima_change.toFixed(2)}%
+                    </td>
+                    <td>${comp.data_points}</td>
+                </tr>
+            `).join('');
+        }
+
+        loadComparisons();
+    </script>
+</body>
+</html>
+{% endblock %}
